@@ -1,5 +1,6 @@
 apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
+apply plugin: 'application'
 
 buildscript {
   repositories {
@@ -15,6 +16,7 @@ repositories {
 }
 
 def grpcVersion = '1.2.0'
+mainClassName = "com.cleo.clarify.server.status.StatusClient"
 
 dependencies {
   compile "io.grpc:grpc-netty:${grpcVersion}"
