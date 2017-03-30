@@ -1,0 +1,41 @@
+apply plugin: 'java'
+apply plugin: 'com.google.protobuf'
+
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.0'
+  }
+}
+
+repositories {
+  mavenCentral()
+}
+
+def grpcVersion = '1.2.0'
+
+dependencies {
+  compile "io.grpc:grpc-netty:${grpcVersion}"
+  compile "io.grpc:grpc-protobuf:${grpcVersion}"
+  compile "io.grpc:grpc-stub:${grpcVersion}"
+}
+
+protobuf {
+  protoc {
+    artifact = 'com.google.protobuf:protoc:3.2.0'
+  }
+  plugins {
+    grpc {
+      artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
+    }
+  }
+  generateProtoTasks {
+    all()*.plugins {
+      grpc {
+        option 'enable_deprecated=false'
+      }
+    }
+  }
+}
