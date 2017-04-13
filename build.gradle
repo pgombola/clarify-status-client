@@ -1,28 +1,43 @@
-apply plugin: 'java'
-apply plugin: 'com.google.protobuf'
-apply plugin: 'application'
-
 buildscript {
   repositories {
     mavenCentral()
+    jcenter()
   }
   dependencies {
     classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.0'
   }
 }
 
+plugins {
+  id 'com.github.johnrengelman.shadow' version '1.2.3'
+}
+
+apply plugin: 'java'
+apply plugin: 'com.google.protobuf'
+apply plugin: 'com.github.johnrengelman.shadow'
+
 repositories {
   mavenCentral()
 }
 
+def clientVersion = '0.1.0'
 def grpcVersion = '1.2.0'
-mainClassName = "com.cleo.clarify.server.status.StatusClient"
 
 dependencies {
   compile "io.grpc:grpc-netty:${grpcVersion}"
   compile "io.grpc:grpc-protobuf:${grpcVersion}"
   compile "io.grpc:grpc-stub:${grpcVersion}"
   compile 'com.orbitz.consul:consul-client:0.13.11'
+  
+  testCompile 'junit:junit:4.12'
+  testCompile 'com.jayway.awaitility:awaitility:1.7.0'
+  testCompile 'com.pszymczyk.consul:embedded-consul:0.2.0'
+}
+
+shadowJar {
+  baseName = 'com.cleo.clarify.control.client'
+  version = clientVersion
+  mergeServiceFiles()
 }
 
 protobuf {

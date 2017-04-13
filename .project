@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>server-status-client</name>
+	<name>com.cleo.clarify.control.client</name>
 	<comment>Project server-status-client created by Buildship.</comment>
 	<projects>
 	</projects>
