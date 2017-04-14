@@ -55,10 +55,10 @@ public class ServiceLocationTest {
 		List<ServiceLocation> locations = controlResource.controlClient().discoverService(svc);
 		
 		assertThat(locations.size(), equalTo(1));
-		assertHostAndPort(locations.get(0), svc, 1234);
+		assertHostAndPort(locations.get(0), svc, 1234L);
 	}
 	
-	private void assertHostAndPort(ServiceLocation svc, String host, int port) {
+	private void assertHostAndPort(ServiceLocation svc, String host, long port) {
 		assertThat(svc.getServiceHost(), equalTo(host));
 		assertThat(svc.getServicePort(), equalTo(port));
 	}
