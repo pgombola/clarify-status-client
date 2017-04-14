@@ -49,6 +49,8 @@ public class ControlClient {
 		private String address;
 		private int port;
 		
+		private Builder() { }
+		
 		public Builder withDiscoveryAddress(String address) {
 			this.address = address;
 			return this;
