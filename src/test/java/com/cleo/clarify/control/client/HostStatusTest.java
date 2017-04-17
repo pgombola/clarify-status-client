@@ -1,7 +1,6 @@
 package com.cleo.clarify.control.client;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.iterableWithSize;
 import static org.junit.Assert.assertThat;
 
 import org.junit.AfterClass;
@@ -35,7 +34,7 @@ public class HostStatusTest {
 	public void hostStatus_size_3() {
 		controlResource.registerAndStart(statusService(HostStatus.STARTED, HostStatus.STARTED, HostStatus.STARTED));
 		
-		assertThat(controlResource.controlClient().hostStatus(), iterableWithSize(3));
+		assertThat(controlResource.controlClient().hostStatus().size(), equalTo(3));
 	}
 	
 	@Test
@@ -78,7 +77,7 @@ public class HostStatusTest {
 		assertThat(status.getCoordinatorLeader(), equalTo(true));
 	}
 	
-	private BindableService statusService(HostStatus... status) {
+	private BindableService statusService(final HostStatus... status) {
 		return new ClarifyControlGrpc.ClarifyControlImplBase() {
 
 			@Override

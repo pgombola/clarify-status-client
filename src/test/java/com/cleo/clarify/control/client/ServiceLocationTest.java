@@ -63,7 +63,7 @@ public class ServiceLocationTest {
 		assertThat(svc.getServicePort(), equalTo(port));
 	}
 	
-	private void registerService(String... services) {
+	private void registerService(final String... services) {
 		controlResource.registerAndStart(new ClarifyControlGrpc.ClarifyControlImplBase() {
 
 			@Override

@@ -20,8 +20,10 @@ repositories {
   mavenCentral()
 }
 
-def clientVersion = '0.2.0'
+def clientVersion = '0.3.0'
 def grpcVersion = '1.2.0'
+sourceCompatibility = '1.7'
+targetCompatibility = '1.7'
 
 dependencies {
   compile "io.grpc:grpc-netty:${grpcVersion}"
