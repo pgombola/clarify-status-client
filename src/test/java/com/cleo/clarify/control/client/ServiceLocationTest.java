@@ -13,10 +13,10 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.cleo.clarify.control.pb.ClarifyControlGrpc;
+import com.cleo.clarify.control.pb.Service;
 import com.cleo.clarify.control.pb.ServiceLocationReply;
 import com.cleo.clarify.control.pb.ServiceLocationReply.Builder;
 import com.cleo.clarify.control.pb.ServiceLocationReply.ServiceLocation;
-import com.cleo.clarify.control.pb.ServiceLocationRequest;
 
 import io.grpc.stub.StreamObserver;
 
@@ -67,7 +67,7 @@ public class ServiceLocationTest {
 		controlResource.registerAndStart(new ClarifyControlGrpc.ClarifyControlImplBase() {
 
 			@Override
-			public void getServiceLocation(ServiceLocationRequest request, StreamObserver<ServiceLocationReply> responseObserver) {
+			public void serviceLocation(Service request, StreamObserver<ServiceLocationReply> responseObserver) {
 				Builder replyBuilder = ServiceLocationReply.newBuilder();
 				for (String svc : services) {
 					replyBuilder.addLocations(

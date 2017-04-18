@@ -2,14 +2,23 @@ package com.cleo.clarify.control;
 
 import java.util.List;
 
+import com.cleo.clarify.control.methods.Drain;
 import com.cleo.clarify.control.methods.HostStatus;
 import com.cleo.clarify.control.methods.ServiceDiscovery;
-import com.cleo.clarify.control.pb.HostStatusReply.Host;
+import com.cleo.clarify.control.methods.Stop;
+import com.cleo.clarify.control.pb.ClarifyControlGrpc;
+import com.cleo.clarify.control.pb.ClarifyControlGrpc.ClarifyControlBlockingStub;
+import com.cleo.clarify.control.pb.DrainReply;
+import com.cleo.clarify.control.pb.NodeStatusReply.NodeDetails;
 import com.cleo.clarify.control.pb.ServiceLocationReply.ServiceLocation;
+import com.cleo.clarify.control.pb.StopReply;
 import com.google.common.net.HostAndPort;
 import com.orbitz.consul.Consul;
 import com.orbitz.consul.model.ConsulResponse;
 import com.orbitz.consul.model.catalog.CatalogService;
+
+import io.grpc.Channel;
+import io.grpc.ManagedChannelBuilder;
 
 public class ControlClient {
 	
@@ -19,18 +28,48 @@ public class ControlClient {
 		this.consul = Consul.builder().withHostAndPort(HostAndPort.fromParts(address, port)).build();
 	}
 	
-	public List<Host> hostStatus() {
-		HostAndPort controlServer = findControlServer();
-		return new HostStatus(controlServer.getHostText(), controlServer.getPort()).execute();
+	public List<NodeDetails> nodeStatus() {
+		ClarifyControlBlockingStub stub = createBlockingStub();
+		return new HostStatus(stub).execute();
 	}
 	
 	public List<ServiceLocation> discoverService(String serviceName) {
-		HostAndPort controlServer = findControlServer();
-		return new ServiceDiscovery(controlServer.getHostText(), controlServer.getPort())
-				.forService(serviceName)
-				.execute();
+		return discoverService(serviceName, null, false);
 	}
 	
+	public List<ServiceLocation> discoverService(String serviceName, String serviceTag) {
+		return discoverService(serviceName, serviceTag, false);
+	}
+	
+	public List<ServiceLocation> discoverService(String serviceName, String serviceTag, boolean allowUnhealthy) {
+		ClarifyControlBlockingStub stub = createBlockingStub();
+		ServiceDiscovery discovery = new ServiceDiscovery(stub)
+			.forService(serviceName);
+		if (serviceTag != null && !serviceTag.isEmpty()) {
+			discovery.withTag(serviceTag);
+		}
+		if (allowUnhealthy) {
+			discovery.allowUnhealthy();
+		}
+		return discovery.execute();
+	}
+	
+	public DrainReply drain(String hostname) {
+		return new Drain(createBlockingStub()).withHostname(hostname).execute();
+	}
+	
+	public StopReply stop(String jobName) {
+		return new Stop(createBlockingStub()).withJob(jobName).execute();
+	}
+	
+	private ClarifyControlBlockingStub createBlockingStub() {
+		HostAndPort controlServer = findControlServer();
+		ManagedChannelBuilder<?> channelBuilder = ManagedChannelBuilder
+				.forAddress(controlServer.getHostText(), controlServer.getPort()).usePlaintext(true);
+		Channel channel = channelBuilder.build();
+		return ClarifyControlGrpc.newBlockingStub(channel);
+	}
+
 	private HostAndPort findControlServer() {
 		ConsulResponse<List<CatalogService>> serviceResponse = consul.catalogClient().getService("clarify-control");
 		if (serviceResponse.getResponse().size() < 1) {

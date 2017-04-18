@@ -11,11 +11,12 @@ import org.junit.rules.ExpectedException;
 
 import com.cleo.clarify.control.ControlServerException;
 import com.cleo.clarify.control.pb.ClarifyControlGrpc;
-import com.cleo.clarify.control.pb.HostStatusReply;
-import com.cleo.clarify.control.pb.HostStatusReply.Builder;
-import com.cleo.clarify.control.pb.HostStatusReply.Host;
-import com.cleo.clarify.control.pb.HostStatusReply.Host.HostStatus;
-import com.cleo.clarify.control.pb.HostStatusRequest;
+import com.cleo.clarify.control.pb.ClarifyStatus;
+import com.cleo.clarify.control.pb.Job;
+import com.cleo.clarify.control.pb.Node;
+import com.cleo.clarify.control.pb.NodeStatusReply;
+import com.cleo.clarify.control.pb.NodeStatusReply.Builder;
+import com.cleo.clarify.control.pb.NodeStatusReply.NodeDetails;
 
 import io.grpc.BindableService;
 import io.grpc.stub.StreamObserver;
@@ -32,17 +33,17 @@ public class HostStatusTest {
 	
 	@Test
 	public void hostStatus_size_3() {
-		controlResource.registerAndStart(statusService(HostStatus.STARTED, HostStatus.STARTED, HostStatus.STARTED));
+		controlResource.registerAndStart(statusRpc(ClarifyStatus.NODE_ALLOC_STARTED, ClarifyStatus.NODE_ALLOC_STARTED, ClarifyStatus.NODE_ALLOC_STARTED));
 		
-		assertThat(controlResource.controlClient().hostStatus().size(), equalTo(3));
+		assertThat(controlResource.controlClient().nodeStatus().size(), equalTo(3));
 	}
 	
 	@Test
 	public void hostStatus_status_equal_started() {
-		controlResource.registerAndStart(statusService(HostStatus.STARTED, HostStatus.STARTED, HostStatus.STARTED));
+		controlResource.registerAndStart(statusRpc(ClarifyStatus.NODE_ALLOC_STARTED, ClarifyStatus.NODE_ALLOC_STARTED, ClarifyStatus.NODE_ALLOC_STARTED));
 		
-		for (Host h : controlResource.controlClient().hostStatus()) {
-			assertThat(h.getStatus(), equalTo(HostStatus.STARTED));
+		for (NodeDetails n : controlResource.controlClient().nodeStatus()) {
+			assertThat(n.getStatus(), equalTo(ClarifyStatus.NODE_ALLOC_STARTED));
 		}
 	}
 	
@@ -51,13 +52,15 @@ public class HostStatusTest {
 		controlResource.registerAndStart(new ClarifyControlGrpc.ClarifyControlImplBase() {
 
 			@Override
-			public void getHostStatus(HostStatusRequest request, StreamObserver<HostStatusReply> responseObserver) {
-				responseObserver.onNext(HostStatusReply.newBuilder().setError("Error").build());
+			public void nodeStatus(Job request, StreamObserver<NodeStatusReply> responseObserver) {
+				responseObserver.onNext(NodeStatusReply.newBuilder().setError("error").build());
 				responseObserver.onCompleted();
 			}
 		});
+		
 		exception.expect(ControlServerException.class);
-		controlResource.controlClient().hostStatus();
+		controlResource.controlClient().nodeStatus();
+		
 		exception.expectMessage(equalTo("Error"));
 	}
 	
@@ -66,32 +69,36 @@ public class HostStatusTest {
 		controlResource.registerAndStart(new ClarifyControlGrpc.ClarifyControlImplBase() {
 
 			@Override
-			public void getHostStatus(HostStatusRequest request, StreamObserver<HostStatusReply> responseObserver) {
-				Host host = Host.newBuilder().setHostname("server-1").setStatus(HostStatus.STARTED).setCoordinatorLeader(true).build();
-				responseObserver.onNext(HostStatusReply.newBuilder().addHosts(host).build());
+			public void nodeStatus(Job request, StreamObserver<NodeStatusReply> responseObserver) {
+				NodeDetails details = NodeDetails.newBuilder()
+						.setNode(Node.newBuilder().setHostname("server-1").build())
+						.setCoordinatorLeader(true).build();
+				responseObserver.onNext(NodeStatusReply.newBuilder().addDetails(details).build());
 				responseObserver.onCompleted();
 			}
 		});
 		
-		Host status = controlResource.controlClient().hostStatus().get(0);
-		assertThat(status.getCoordinatorLeader(), equalTo(true));
+		NodeDetails details = controlResource.controlClient().nodeStatus().get(0);
+		assertThat(details.getCoordinatorLeader(), equalTo(true));
 	}
 	
-	private BindableService statusService(final HostStatus... status) {
+	private BindableService statusRpc(final ClarifyStatus... status) {
 		return new ClarifyControlGrpc.ClarifyControlImplBase() {
 
 			@Override
-			public void getHostStatus(HostStatusRequest request, StreamObserver<HostStatusReply> responseObserver) {
-				Builder replyBuilder = HostStatusReply.newBuilder();
+			public void nodeStatus(Job request, StreamObserver<NodeStatusReply> responseObserver) {
+				Builder replyBuilder = NodeStatusReply.newBuilder();
 				int count = 1;
-				for (HostStatus s : status) {
-					replyBuilder.addHosts(Host.newBuilder().setHostname("server-" + count).setStatus(s).build());
+				for (ClarifyStatus s : status) {
+					replyBuilder.addDetails(
+							NodeDetails.newBuilder()
+								.setNode(Node.newBuilder().setHostname("server-" + count).build())
+								.setStatus(s).build());
 					count++;
 				}
 				responseObserver.onNext(replyBuilder.build());
 				responseObserver.onCompleted();
 			}
-			
 		};
 	}
 

@@ -20,7 +20,7 @@ repositories {
   mavenCentral()
 }
 
-def clientVersion = '0.3.0'
+def clientVersion = '0.4.0'
 def grpcVersion = '1.2.0'
 sourceCompatibility = '1.7'
 targetCompatibility = '1.7'
@@ -40,6 +40,8 @@ shadowJar {
   baseName = 'com.cleo.clarify.control.client'
   version = clientVersion
   mergeServiceFiles()
+  // Server has multiple versions of guava so we're going to hide this one
+  relocate 'com.google.common', 'internal.com.google.common'
 }
 
 protobuf {
