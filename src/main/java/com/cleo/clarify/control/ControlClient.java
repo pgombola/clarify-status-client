@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.cleo.clarify.control.methods.Drain;
 import com.cleo.clarify.control.methods.HostStatus;
+import com.cleo.clarify.control.methods.Leader;
 import com.cleo.clarify.control.methods.ServiceDiscovery;
 import com.cleo.clarify.control.methods.Stop;
 import com.cleo.clarify.control.pb.ClarifyControlGrpc;
@@ -60,6 +61,10 @@ public class ControlClient {
 	
 	public StopReply stop(String jobName) {
 		return new Stop(createBlockingStub()).withJob(jobName).execute();
+	}
+	
+	public ServiceLocation leader(String serviceName) {
+		return new Leader(createBlockingStub()).forServiceName(serviceName).execute();
 	}
 	
 	private ClarifyControlBlockingStub createBlockingStub() {
