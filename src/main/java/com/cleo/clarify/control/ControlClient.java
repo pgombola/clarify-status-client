@@ -15,18 +15,25 @@ import com.cleo.clarify.control.pb.ServiceLocationReply.ServiceLocation;
 import com.cleo.clarify.control.pb.StopReply;
 import com.google.common.net.HostAndPort;
 import com.orbitz.consul.Consul;
+import com.orbitz.consul.ConsulException;
 import com.orbitz.consul.model.ConsulResponse;
 import com.orbitz.consul.model.catalog.CatalogService;
 
 import io.grpc.Channel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.internal.DnsNameResolverProvider;
+import io.grpc.netty.NettyChannelBuilder;
 
 public class ControlClient {
 	
 	private final Consul consul;
 	
-	private ControlClient(String address, int port) {
-		this.consul = Consul.builder().withHostAndPort(HostAndPort.fromParts(address, port)).build();
+	private ControlClient(String address, int port) throws InvalidDiscoveryAddress {
+		try {
+			this.consul = Consul.builder().withHostAndPort(HostAndPort.fromParts(address, port)).build();
+		} catch (ConsulException e) {
+			throw new UnableToDiscoverControlServer();
+		}
 	}
 	
 	public List<NodeDetails> nodeStatus() {
@@ -69,8 +76,10 @@ public class ControlClient {
 		
 	private ClarifyControlBlockingStub createBlockingStub() {
 		HostAndPort controlServer = findControlServer();
-		ManagedChannelBuilder<?> channelBuilder = ManagedChannelBuilder
-				.forAddress(controlServer.getHostText(), controlServer.getPort()).usePlaintext(true);
+		ManagedChannelBuilder<?> channelBuilder = NettyChannelBuilder
+				.forAddress(controlServer.getHostText(), controlServer.getPort())
+				.usePlaintext(true)
+				.nameResolverFactory(new DnsNameResolverProvider());
 		Channel channel = channelBuilder.build();
 		return ClarifyControlGrpc.newBlockingStub(channel);
 	}
@@ -105,7 +114,7 @@ public class ControlClient {
 			return this;
 		}
 		
-		public ControlClient build() {
+		public ControlClient build() throws InvalidDiscoveryAddress {
 			return new ControlClient(address, port);
 		}
 	}
