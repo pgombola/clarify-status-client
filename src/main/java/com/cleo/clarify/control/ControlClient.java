@@ -63,10 +63,10 @@ public class ControlClient {
 		return new Stop(createBlockingStub()).withJob(jobName).execute();
 	}
 	
-	public ServiceLocation leader(String serviceName) {
+	public ServiceLocation leader(String serviceName) throws LeaderNotFound {
 		return new Leader(createBlockingStub()).forServiceName(serviceName).execute();
 	}
-	
+		
 	private ClarifyControlBlockingStub createBlockingStub() {
 		HostAndPort controlServer = findControlServer();
 		ManagedChannelBuilder<?> channelBuilder = ManagedChannelBuilder
