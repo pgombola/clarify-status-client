@@ -62,8 +62,10 @@ public class ControlClient {
 		return discovery.execute();
 	}
 	
-	public DrainReply drain(String hostname) {
-		return new Drain(createBlockingStub()).withHostname(hostname).execute();
+	public DrainReply drain(String hostname, boolean enabled) {
+		Drain d = new Drain(createBlockingStub()).withHostname(hostname);
+		if (enabled) d.enabled();
+		return d.execute();
 	}
 	
 	public StopReply stop(String jobName) {
