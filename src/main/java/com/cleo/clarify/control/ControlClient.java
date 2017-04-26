@@ -17,7 +17,9 @@ import com.google.common.net.HostAndPort;
 import com.orbitz.consul.Consul;
 import com.orbitz.consul.ConsulException;
 import com.orbitz.consul.model.ConsulResponse;
-import com.orbitz.consul.model.catalog.CatalogService;
+import com.orbitz.consul.model.health.Service;
+import com.orbitz.consul.model.health.ServiceHealth;
+import com.orbitz.consul.option.ImmutableCatalogOptions;
 
 import io.grpc.Channel;
 import io.grpc.ManagedChannelBuilder;
@@ -87,12 +89,15 @@ public class ControlClient {
 	}
 
 	private HostAndPort findControlServer() {
-		ConsulResponse<List<CatalogService>> serviceResponse = consul.catalogClient().getService("clarify-control");
+		ConsulResponse<List<ServiceHealth>> serviceResponse = 
+				consul.healthClient().getHealthyServiceInstances(
+						"clarify-control", 
+						ImmutableCatalogOptions.builder().tag("grpc").build());
 		if (serviceResponse.getResponse().size() < 1) {
 			throw new UnableToDiscoverControlServer();
 		}
-		CatalogService svc = serviceResponse.getResponse().get(0);
-		return HostAndPort.fromParts(svc.getServiceAddress(), svc.getServicePort());
+		Service svc = serviceResponse.getResponse().get(0).getService();
+		return HostAndPort.fromParts(svc.getAddress(), svc.getPort());
 	}
 		
 	public static final Builder newBuilder() {

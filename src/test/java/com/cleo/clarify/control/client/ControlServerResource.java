@@ -96,6 +96,7 @@ public class ControlServerResource extends ExternalResource {
 				.address("localhost")
 				.port(grpcServer.getPort())
 				.name("clarify-control")
+				.addTags("grpc")
 				.build());
 	}
 
